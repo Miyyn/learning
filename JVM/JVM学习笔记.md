@@ -1,0 +1,97 @@
+# JVM学习笔记
+
+#####1.Java内存区域与内存溢出异常
+
+###### 1.1运行时数据区划分
+
+- **程序计数器**
+  - 程序计数器是一块较小的内存空间，他可以看作是当前线程所执行的字节码的行号指示器。
+    - 如果线程正在执行的是一个java方法，这个计数器记录的是正在执行的虚拟机字节码指令的地址。
+    - 如果正在执行的是Native方法，这个计数器则为空
+  - 线程私有。
+  - 是唯一一个在java虚拟机规范中没有规定任何OOM情况的区域。
+
+- **Java虚拟机栈**
+  - 线程私有，生命周期与线程相同。
+  - 虚拟机栈描述的是Java方法执行的内存模型：每个方法在执行的同时都会创建一个==栈帧==用于存储==局部变量表、操作数栈、动态链接、方法出口==等信息。每个方法从调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中入栈到出栈的过程。
+    - 局部变量表：存放了编译期可知的各种基本数据类型（boolean、byte、char、short、int、float、long、double）、对象引用（reference类型，他不等同于对象本身，可能是一个指向对象起始地址的引用指针，也可能是指向一个代表对象的句柄或其他与此对象相关的位置）和returnAddress类型（指向了一条字节码指令的地址）。
+  - 两种异常：
+    - 如果线程请求的栈的深度大于虚拟机所允许的深度，将抛出StackOverflowError异常。
+    - 如果虚拟机栈可以动态扩展，若果扩展时无法申请到足够的内存，就会抛出OutOfMemoryError异常
+- **本地方法栈**
+  - 本地方法栈与虚拟机栈所发挥的作用非常相似，之间的区别不过只虚拟机栈为虚拟机执行java方法服务。而本地方法栈为执行Native方法服务。
+  - 两种异常：
+    - 如果线程请求的栈的深度大于虚拟机所允许的深度，将抛出StackOverflowError异常。
+    - 如果虚拟机栈可以动态扩展，若果扩展时无法申请到足够的内存，就会抛出OutOfMemoryError异常
+- 堆：
+  - java虚拟机所管理的内存中最大的一块。
+  - 被所有线程共享的一块内存区域。
+  - 存放实例对象。
+  - 是垃圾收集器管理的主要区域。
+    - 从内存回收角度来看：现在收集器基本都采用**分代收集算法**，所以java堆还可以细分为：==新生代==和==老年代==；在细致一点有Eden空间、From Survivor空间、To Survivor空间等。
+    - 从内存分配角度来看：线程共享的java堆中可能划分出多个线程私有的分配缓冲区（Thread Local Allocation Buffer，TLAB）。
+  - 异常：如果堆中没有内存完成实例分配，并且堆也无法在扩展时，将会抛出OutOfMemoryError异常。
+- **方法区**：
+  - 线程共享的内存区域。
+  - 用于存储已被虚拟机加载的类信息。常量、静态变量、及时编译器编译后的代码等数据。
+  - 异常：当方法区无法满足内存分配需求时，将会抛出OutOfMemoryError异常。
+- **运行时常量池**：
+  - 是方法区的一部分。
+  - Class文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项是常量池，用于存放编译期生成的各种字面量和符号引用。这部分内容将在类加载后进入方法区的运行常量池。
+  - 异常：当常量池无法再申请到内存时会抛出OutOfMemoryError异常。
+
+###### 1.2HotSpot虚拟机对象探秘（对象分配、布局和访问）
+
+- 对象的创建
+
+  - 四种创建方法：
+
+    - 调用new语句创建对象，最常见的一种。
+
+    - clone方法创建对象。
+
+      ```java
+      clone时，需要已经有一个分配了内存的源对象，创建新对象时，首先应该分配一个和源对象一样大的内存空间。要调用clone方法需要实现Cloneable接口，由于clone方法是protected的，所以修改Hello类。
+      ```
+
+    - 反射方法newInstance创建对象
+
+      ```java
+      	Class heroClass = Class.forName("yunche.test.Hello");
+          Hello h =(Hello) heroClass.newInstance();
+      ```
+
+    - 序列化readObject()方法创建对象
+
+      ```java
+      		Hello h = new Hello();
+                //准备一个文件用于存储该对象的信息
+                File f = new File("hello.obj");
+                try{
+                    FileOutputStream fos = new FileOutputStream(f);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+                    FileInputStream fis = new FileInputStream(f);
+                    ObjectInputStream ois = new ObjectInputStream(fis)
+                    //序列化对象，写入到磁盘中
+                    oos.writeObject(h);
+                    //反序列化对象
+                    Hello newHello = (Hello)ois.readObject();
+                    //测试方法
+                    newHello.sayWorld();
+                }catch (FileNotFoundException e){
+                    e.printStackTrace();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }catch (ClassNotFoundException e){
+                    e.printStackTrace();
+                }
+      //使用序列化时，要实现实现Serializable接口，将一个对象序列化到磁盘上，而采用反序列化可以将磁盘上的对象信息转化到内存中.
+      ```
+
+  - ==对象的创建过程==
+
+    - 虚拟机遇到一条new指令时，首先将去检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并且检查这个符号引用代表的类是否已被加载、解析和初始化过，如果没有，那必须先进行相应的类加载过程。在类加载检查通过后，虚拟机将为新生对象分配内存（两种分配方式：**指针碰撞**和**空闲列表**）。内存分配完成后虚拟机需要将分配到的内存空间都初始化为零值（不包括对象头），接下来，虚拟机要对对象进行必要的设置，例如这个对象是那个类的实例，如何才能找到类的元数据信息、对象的哈希吗、对象的GC分代年龄等信息，这些信息存放在对象的对象头中。完成上面工作之后，从虚拟机角度来看，一个新的对象已经产生了，但是从java程序的角度来看，对象创建才刚开始---<init>方法还没执行，所有字段还为0,。所以执行new指令之后会接着执行<init>方法，把对象进行初始化，这样一个真正可用的对象才算完全产生出来。
+
+- **对象的内存布局**：
+
+  -  对象在内存中存储的布局可以分为3块区域：对象头、实例数据、对齐填充。
