@@ -1,0 +1,30 @@
+package com.demo;
+
+import java.sql.Connection;
+import java.util.LinkedList;
+
+public class ConnectionPool {
+	
+	private LinkedList<Connection> pool = new LinkedList<>();
+
+	public ConnectionPool(int initalSize) {
+		if(initalSize > 0) {
+			for(int i=0;i<initalSize;i++) {
+				pool.addLast(ConnectionDriver.createConnection());
+			}
+		}
+	}
+	
+	public void releaseConnection(Connection connection) {
+		if(connection != null) {
+			synchronized (pool) {
+				//连接释放后需要进行通知，这样其他消费者能够感知
+				pool.addLast(connection);
+				pool.notifyAll();
+			}
+		}
+	}
+	
+	
+
+}

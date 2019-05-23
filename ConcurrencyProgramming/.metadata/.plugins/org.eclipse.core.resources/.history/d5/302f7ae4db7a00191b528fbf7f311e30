@@ -1,0 +1,10 @@
+package com.demo;
+
+import java.sql.Connection;
+import java.util.LinkedList;
+
+public class ConnectionPool {
+	
+	private LinkedList<Connection> pool = new LinkedList<>();
+
+}

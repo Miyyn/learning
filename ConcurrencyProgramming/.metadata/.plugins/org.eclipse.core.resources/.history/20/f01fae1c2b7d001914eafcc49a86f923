@@ -1,0 +1,11 @@
+package com.demo;
+
+public class Job implements Runnable{
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

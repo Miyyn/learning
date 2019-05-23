@@ -1,0 +1,44 @@
+package com.demo;
+
+public class DefaultThreadPool<Job extends Runnable>  implements ThreadPool{
+
+	
+	public static final int MAX_WORKER_NUMBER = 10;
+	
+	public static final int DEFAULT_WORKER_NUMBERS = 5;
+	
+	public static final int MIN_WORKER_NUMBERS = 1;
+	
+	
+	
+	@Override
+	public void execute(Runnable job) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void shoutdown() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addWorkers(int num) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeWorker(int num) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void getJobSize() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

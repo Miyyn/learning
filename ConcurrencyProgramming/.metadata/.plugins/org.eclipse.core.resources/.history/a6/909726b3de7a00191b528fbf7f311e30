@@ -1,0 +1,20 @@
+package com.demo;
+
+import java.util.concurrent.CountDownLatch;
+
+public class ConnectionTest {
+
+	static ConnectionPool pool = new ConnectionPool(10);
+	
+	//保证所有ConnectionRunner能够同时开始
+	static CountDownLatch start = new CountDownLatch(1);
+	
+	static CountDownLatch end;
+	
+	public static void main(String[] args) {
+		//线程数量
+		int threadCount = 10;
+		end = new CountDownLatch(threadCount);
+	}
+	
+}

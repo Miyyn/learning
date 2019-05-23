@@ -1,0 +1,113 @@
+package com.demo;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+public class DefaultThreadPool<Job extends Runnable>  implements ThreadPool{
+
+	
+	private static final int MAX_WORKER_NUMBER = 10;
+	
+	private static final int DEFAULT_WORKER_NUMBERS = 5;
+	
+	private static final int MIN_WORKER_NUMBERS = 1;
+	
+	private final LinkedList<Job> jobs = new LinkedList<>();
+	
+	private final List<Worker> workers = Collections.synchronizedList(new ArrayList<Worker>());
+	
+	private int workerNum = DEFAULT_WORKER_NUMBERS;
+	
+	private AtomicLong threadNum = new AtomicLong();
+	
+	
+	
+	
+	
+	
+	public DefaultThreadPool() {
+		initializeWorkers(DEFAULT_WORKER_NUMBERS);
+	}
+
+	
+	
+	
+	public DefaultThreadPool(int num) {
+		workerNum = num > MAX_WORKER_NUMBER ? MAX_WORKER_NUMBER : num < MIN_WORKER_NUMBERS?MIN_WORKER_NUMBERS:num;
+		initializeWorkers(workerNum);
+	}
+
+
+
+
+	@Override
+	public void execute(Job job) {
+		// TODO Auto-generated method stub
+		if(job != null) {
+			synchronized (jobs) {
+				jobs.addLast(job);
+				jobs.notify();
+			}
+		}
+	}
+
+	@Override
+	public void shoutdown() {
+		// TODO Auto-generated method stub
+		for(Worker worker:workers) {
+			worker.shoutdown();
+		}
+	}
+
+	@Override
+	public void addWorkers(int num) {
+		// TODO Auto-generated method stub
+		synchronized (jobs) {
+			if(num + this.workerNum > MAX_WORKER_NUMBER) {
+				num = MAX_WORKER_NUMBER - this.workerNum;
+			}
+			initializeWorkers(num);
+			this.workerNum += num;
+		}
+	}
+
+	@Override
+	public void removeWorker(int num) {
+		// TODO Auto-generated method stub
+		synchronized (jobs) {
+			if(num >= this.workerNum) {
+				throw new IllegalArgumentException("beyound workNum");
+			}
+		}
+	}
+
+	@Override
+	public void getJobSize() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	
+	private void initializeWorkers(int num) {
+		
+	}
+	
+	class Worker implements Runnable{
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+
+
+
+
+
+}
