@@ -22,12 +22,14 @@ public class Main {
 			p.next = node;  //插入新节点
 			p = node.next; //指针下移
 		}
-		
+
+
 		//复制随机指针
 		RandomListNode q = pHead;
 		while(q != null){
 			RandomListNode node2 = q.random;
 			q=q.next;
+			
 			if(node2 == null) {
 				q.random = null;
 			}else {
